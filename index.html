@@ -737,7 +737,6 @@
     <div class="toolbar-wrap">
       <div class="toolbar">
         <button class="btn-primary" id="calcBtn" type="button">計算結果</button>
-        <button class="btn-secondary" id="submitBtn" type="button">送出到 Google 試算表</button>
         <button class="btn-secondary" id="pdfBtn" type="button">列印 / 另存 PDF</button>
         <button class="btn-plain" id="resultBtn" type="button">查看結果區</button>
         <button class="btn-plain" id="resetBtn" type="button">清空重填</button>
@@ -1012,6 +1011,14 @@
         return null;
       }
 
+      const name = document.getElementById('userName').value.trim();
+      if (!name) {
+        alert('請先填寫姓名，資料才會送出到試算表。');
+        return null;
+      }
+
+      const fillDate = document.getElementById('fillDate').value;
+
       const subtotals = sections.map(section => ({
         key: section.key,
         name: section.short,
@@ -1021,8 +1028,6 @@
 
       const total = subtotals.reduce((sum, item) => sum + item.score, 0);
       const risk = getRisk(total);
-      const name = document.getElementById('userName').value.trim();
-      const fillDate = document.getElementById('fillDate').value;
 
       const payload = {
         name,
@@ -1058,56 +1063,27 @@
       renderRadar(subtotals);
     }
 
-    function calculateResults() {
+    async function calculateResults() {
       const result = buildSubmissionData();
       if (!result) return;
+
       renderResultsView(result.subtotals, result.total, result.risk);
       document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-
-    async function submitToGoogleSheet() {
-      const result = buildSubmissionData();
-      if (!result) return;
-      if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE_YOUR_GOOGLE_APPS_SCRIPT_EXEC_URL_HERE')) {
-        alert('請先把 HTML 內的 APPS_SCRIPT_URL 換成你的 Google Apps Script /exec 網址。');
-        return;
-      }
-
-      if (!result.payload.name) {
-        alert('請先填寫「姓名」。');
-        return;
-      }
-      if (!result.payload.fillDate) {
-        alert('請先選擇「填寫日期」。');
-        return;
-      }
-
-      renderResultsView(result.subtotals, result.total, result.risk);
 
       const params = new URLSearchParams();
       Object.entries(result.payload).forEach(([key, value]) => {
         params.append(key, value === undefined || value === null ? '' : String(value));
       });
 
-      const submitBtn = document.getElementById('submitBtn');
-      const originalText = submitBtn.textContent;
-      submitBtn.disabled = true;
-      submitBtn.textContent = '送出中…';
-
       try {
         await fetch(APPS_SCRIPT_URL, {
-  method: 'POST',
-  mode: 'no-cors',
-  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-  body: params.toString()
-});
-        alert('資料已送出到 Google 試算表，請到試算表確認。');
+          method: 'POST',
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: params.toString()
+        });
       } catch (error) {
-        console.error('送出失敗', error);
-        alert('送出失敗，請重新整理頁面後再試一次。');
-      } finally {
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalText;
+        console.error('自動送出失敗', error);
       }
     }
 
@@ -1130,7 +1106,6 @@
     }
 
     document.getElementById('calcBtn').addEventListener('click', calculateResults);
-    document.getElementById('submitBtn').addEventListener('click', submitToGoogleSheet);
     document.getElementById('pdfBtn').addEventListener('click', () => window.print());
     document.getElementById('resultBtn').addEventListener('click', () => document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' }));
     document.getElementById('resetBtn').addEventListener('click', resetForm);
