@@ -1095,8 +1095,12 @@
       submitBtn.textContent = '送出中…';
 
       try {
-        const submitUrl = `${APPS_SCRIPT_URL}?${params.toString()}`;
-        await fetch(submitUrl, { method: 'GET', mode: 'no-cors' });
+        await fetch(APPS_SCRIPT_URL, {
+  method: 'POST',
+  mode: 'no-cors',
+  headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+  body: params.toString()
+});
         alert('資料已送出到 Google 試算表，請到試算表確認。');
       } catch (error) {
         console.error('送出失敗', error);
