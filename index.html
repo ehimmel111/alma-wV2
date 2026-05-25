@@ -1,0 +1,1123 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#8ea88e" />
+  <title>ALMA-W生活狀態關懷表</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --bg-1: #f7f3ea;
+      --bg-2: #edf4ea;
+      --bg-3: #e7efe3;
+      --paper: rgba(255, 251, 245, 0.92);
+      --paper-strong: rgba(255, 255, 255, 0.97);
+      --line: rgba(114, 143, 114, 0.16);
+      --line-strong: rgba(114, 143, 114, 0.28);
+      --text: #465145;
+      --muted: #748073;
+      --green-1: #edf5eb;
+      --green-2: #dcead9;
+      --green-3: #bfd4bc;
+      --green-4: #9fb99c;
+      --green-5: #6e8e70;
+      --green-6: #4f6e55;
+      --warm: #ebe0cf;
+      --warm-deep: #d8bfa0;
+      --shadow: 0 18px 42px rgba(88, 109, 88, 0.1);
+      --radius-xl: 28px;
+      --radius-lg: 22px;
+      --radius-md: 18px;
+      --radius-sm: 14px;
+      --container: 1120px;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      color: var(--text);
+      font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      line-height: 1.75;
+      background:
+        radial-gradient(circle at top left, rgba(235, 224, 207, 0.9), transparent 30%),
+        radial-gradient(circle at top right, rgba(220, 234, 217, 0.86), transparent 24%),
+        linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 58%, var(--bg-3) 100%);
+      min-height: 100vh;
+    }
+
+    img, canvas { max-width: 100%; }
+
+    .container {
+      width: min(var(--container), calc(100% - 24px));
+      margin: 0 auto;
+      padding: 22px 0 54px;
+    }
+
+    .hero,
+    .intro-card,
+    .question-card,
+    .result-card,
+    .resource-card,
+    .toolbar {
+      background: var(--paper);
+      border: 1px solid rgba(255,255,255,0.72);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+
+    .hero {
+      position: relative;
+      overflow: hidden;
+      border-radius: var(--radius-xl);
+      padding: 30px 28px 26px;
+      margin-bottom: 18px;
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0 auto auto 0;
+      width: 100%;
+      height: 12px;
+      background: linear-gradient(90deg, #d7e5d1, #ebe0cf, #c8dbc4);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -60px;
+      top: -40px;
+      width: 220px;
+      height: 220px;
+      background: radial-gradient(circle, rgba(223, 234, 214, 0.56), transparent 62%);
+      pointer-events: none;
+    }
+
+    .hero-title {
+      margin: 8px 0 10px;
+      font-family: "Noto Serif TC", "PMingLiU", serif;
+      font-size: clamp(2rem, 4vw, 2.9rem);
+      line-height: 1.2;
+      letter-spacing: 0.02em;
+      color: var(--green-6);
+      font-weight: 700;
+    }
+
+    .hero-subtitle {
+      margin: 0;
+      color: #6b796b;
+      font-size: 1rem;
+      font-weight: 600;
+    }
+
+    .hero-copy {
+      margin-top: 18px;
+      max-width: 760px;
+      font-size: 1.04rem;
+      color: var(--text);
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 18px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 14px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(220, 234, 217, 0.98), rgba(235, 224, 207, 0.88));
+      border: 1px solid rgba(114, 143, 114, 0.12);
+      color: var(--green-6);
+      font-size: 0.93rem;
+      font-weight: 700;
+    }
+
+    .meta-grid,
+    .intro-grid,
+    .result-grid {
+      display: grid;
+      gap: 18px;
+    }
+
+    .meta-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      margin-top: 22px;
+    }
+
+    .meta-card,
+    .intro-card,
+    .question-card,
+    .result-card,
+    .resource-card {
+      border-radius: var(--radius-lg);
+    }
+
+    .meta-card {
+      background: rgba(255,255,255,0.72);
+      border: 1px solid var(--line);
+      padding: 14px;
+    }
+
+    .meta-card label {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--green-6);
+      font-weight: 800;
+      font-size: 0.95rem;
+    }
+
+    input[type="text"], input[type="date"] {
+      width: 100%;
+      border: 1px solid rgba(114, 143, 114, 0.18);
+      border-radius: 14px;
+      background: rgba(255,255,255,0.95);
+      color: var(--text);
+      padding: 12px 14px;
+      font-size: 1rem;
+      outline: none;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+
+    input[type="text"]:focus, input[type="date"]:focus {
+      border-color: rgba(114, 143, 114, 0.45);
+      box-shadow: 0 0 0 4px rgba(159, 185, 156, 0.14);
+    }
+
+    .intro-grid {
+      grid-template-columns: 1.15fr 0.85fr;
+      margin-bottom: 18px;
+    }
+
+    .intro-card {
+      padding: 22px 20px;
+    }
+
+    .intro-card h2,
+    .result-card h3,
+    .resource-card h3 {
+      margin: 0 0 10px;
+      font-family: "Noto Serif TC", "PMingLiU", serif;
+      color: var(--green-6);
+      font-size: 1.22rem;
+      font-weight: 700;
+    }
+
+    .intro-card p,
+    .intro-card li,
+    .resource-card p { margin: 0; }
+
+    .intro-card ul {
+      margin: 8px 0 0;
+      padding-left: 1.2rem;
+    }
+
+    .section-block {
+      margin-bottom: 22px;
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+      padding: 0 4px;
+    }
+
+    .section-title {
+      margin-bottom: 4px;
+      color: var(--green-6);
+      font-family: "Noto Serif TC", "PMingLiU", serif;
+      font-size: 1.28rem;
+      font-weight: 700;
+    }
+
+    .section-desc {
+      max-width: 780px;
+      color: var(--muted);
+      font-size: 0.96rem;
+    }
+
+    .score-tag {
+      min-width: 132px;
+      text-align: center;
+      padding: 9px 14px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, rgba(237, 245, 235, 0.98), rgba(245, 239, 228, 0.96));
+      border: 1px solid var(--line);
+      color: var(--green-6);
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    .question-list {
+      display: grid;
+      gap: 14px;
+    }
+
+    .question-card {
+      padding: 18px;
+      border: 1px solid rgba(114, 143, 114, 0.12);
+      background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(251,248,242,0.95));
+    }
+
+    .question-head {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+
+    .question-mark {
+      width: 34px;
+      height: 34px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(220, 234, 217, 0.95), rgba(235, 224, 207, 0.92));
+      color: var(--green-6);
+      font-size: 0.9rem;
+      font-weight: 800;
+      margin-top: 2px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,0.7);
+    }
+
+    .question-title {
+      margin: 0;
+      color: var(--text);
+      font-size: 1rem;
+      font-weight: 800;
+    }
+
+    .question-note {
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .options {
+      display: grid;
+      gap: 10px;
+    }
+
+    .option {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 12px 14px;
+      border-radius: 16px;
+      cursor: pointer;
+      background: rgba(255,255,255,0.8);
+      border: 1px solid rgba(114, 143, 114, 0.12);
+      transition: transform 0.18s ease, background 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .option:hover {
+      transform: translateY(-1px);
+      background: rgba(255,255,255,0.98);
+      border-color: rgba(114, 143, 114, 0.24);
+      box-shadow: 0 8px 18px rgba(114, 143, 114, 0.06);
+    }
+
+    .option input {
+      flex: 0 0 auto;
+      margin-top: 4px;
+      accent-color: var(--green-5);
+      transform: scale(1.14);
+    }
+
+    .option span {
+      display: block;
+      line-height: 1.6;
+    }
+
+    .option.selected {
+      background: linear-gradient(135deg, rgba(237, 245, 235, 0.98), rgba(245, 239, 228, 0.96));
+      border-color: rgba(114, 143, 114, 0.38);
+      box-shadow: 0 10px 22px rgba(114, 143, 114, 0.09);
+    }
+
+    .toolbar-wrap {
+      position: sticky;
+      bottom: 14px;
+      z-index: 20;
+      margin-top: 22px;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      padding: 14px;
+      border-radius: 22px;
+      border: 1px solid rgba(114, 143, 114, 0.14);
+    }
+
+    button {
+      appearance: none;
+      border: none;
+      border-radius: 999px;
+      padding: 12px 20px;
+      font-size: 0.98rem;
+      font-weight: 800;
+      letter-spacing: 0.01em;
+      cursor: pointer;
+      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease, background 0.18s ease;
+    }
+
+    button:hover { transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+
+    .btn-primary {
+      color: #fff;
+      background: linear-gradient(135deg, #7f9c7d, #658566);
+      box-shadow: 0 12px 24px rgba(101, 133, 102, 0.24);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 14px 28px rgba(101, 133, 102, 0.3);
+    }
+
+    .btn-secondary {
+      color: var(--green-6);
+      background: linear-gradient(135deg, rgba(220, 234, 217, 1), rgba(235, 224, 207, 0.95));
+      border: 1px solid rgba(114, 143, 114, 0.14);
+    }
+
+    .btn-plain {
+      color: var(--text);
+      background: rgba(255,255,255,0.92);
+      border: 1px solid rgba(114, 143, 114, 0.12);
+    }
+
+    .results {
+      display: none;
+      margin-top: 28px;
+    }
+
+    .results.show { display: block; }
+
+    .result-grid {
+      grid-template-columns: 1.02fr 0.98fr;
+      margin-bottom: 18px;
+    }
+
+    .result-card,
+    .resource-card {
+      padding: 22px;
+    }
+
+    .score-line {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+
+    .score-number {
+      font-size: clamp(2.7rem, 5vw, 4.3rem);
+      line-height: 1;
+      font-weight: 900;
+      color: var(--green-6);
+    }
+
+    .score-total {
+      font-size: 1.15rem;
+      color: var(--muted);
+      font-weight: 700;
+    }
+
+    .risk-box {
+      margin: 14px 0 0;
+      padding: 18px 18px;
+      border-radius: 20px;
+      font-weight: 800;
+      border: 1px solid transparent;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .risk-level {
+      display: inline-block;
+      font-family: "Noto Serif TC", "PMingLiU", serif;
+      font-size: 1.22rem;
+      margin-bottom: 4px;
+    }
+
+    .risk-action {
+      display: block;
+      font-size: 0.96rem;
+      font-weight: 700;
+      opacity: 0.96;
+    }
+
+    .risk-stable {
+      background: linear-gradient(135deg, #edf5eb, #f6f7ee);
+      color: #567156;
+      border-color: rgba(114, 143, 114, 0.16);
+    }
+
+    .risk-light {
+      background: linear-gradient(135deg, #dcead9, #eef4e7);
+      color: #4f6d52;
+      border-color: rgba(114, 143, 114, 0.18);
+    }
+
+    .risk-medium {
+      background: linear-gradient(135deg, #bfd4bc, #dfe8d9);
+      color: #476349;
+      border-color: rgba(114, 143, 114, 0.22);
+    }
+
+    .risk-high {
+      background: linear-gradient(135deg, #8eab8e, #a6c0a2);
+      color: #ffffff;
+      border-color: rgba(79, 110, 85, 0.16);
+    }
+
+    .risk-urgent {
+      background: linear-gradient(135deg, #4f6e55, #6a8a6b);
+      color: #ffffff;
+      border-color: rgba(79, 110, 85, 0.18);
+    }
+
+    .subscores {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 16px;
+    }
+
+    .subscore-item {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.84);
+      border: 1px solid rgba(114, 143, 114, 0.12);
+    }
+
+    .subscore-name {
+      margin: 0 0 6px;
+      font-size: 0.95rem;
+      color: var(--text);
+      font-weight: 800;
+    }
+
+    .subscore-value {
+      margin: 0;
+      font-size: 1.04rem;
+      color: var(--green-6);
+      font-weight: 900;
+    }
+
+    .chart-box {
+      min-height: 390px;
+      position: relative;
+    }
+
+    .resource-card {
+      max-width: 100%;
+    }
+
+    .resource-list {
+      display: grid;
+      gap: 10px;
+      margin-top: 12px;
+    }
+
+    .resource-item {
+      padding: 13px 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.82);
+      border: 1px solid rgba(114, 143, 114, 0.12);
+    }
+
+    .resource-item strong {
+      display: inline-block;
+      min-width: 70px;
+      color: var(--green-6);
+    }
+
+    .print-note {
+      display: none;
+    }
+
+    @media (max-width: 920px) {
+      .meta-grid,
+      .intro-grid,
+      .result-grid,
+      .subscores {
+        grid-template-columns: 1fr;
+      }
+
+      .chart-box {
+        min-height: 320px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .container {
+        width: min(100% - 14px, 100%);
+        padding-top: 14px;
+      }
+
+      .hero,
+      .intro-card,
+      .question-card,
+      .result-card,
+      .resource-card,
+      .toolbar {
+        border-radius: 18px;
+      }
+
+      .hero {
+        padding: 22px 16px 18px;
+      }
+
+      .hero-copy {
+        font-size: 0.98rem;
+      }
+
+      .question-card {
+        padding: 15px;
+      }
+
+      .question-mark {
+        width: 30px;
+        height: 30px;
+        font-size: 0.83rem;
+      }
+
+      .toolbar-wrap {
+        bottom: 10px;
+      }
+
+      .toolbar {
+        padding: 12px;
+      }
+
+      .toolbar button,
+      .score-tag {
+        width: 100%;
+      }
+
+      .score-tag {
+        text-align: center;
+      }
+    }
+
+    @page {
+      size: A4;
+      margin: 12mm;
+    }
+
+    @media print {
+      html, body {
+        background: #fff !important;
+        color: #222 !important;
+      }
+
+      .container {
+        width: 100%;
+        max-width: none;
+        padding: 0;
+      }
+
+      .hero,
+      .intro-card,
+      .question-card,
+      .result-card,
+      .resource-card {
+        background: #fff !important;
+        box-shadow: none !important;
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+        border: 1px solid #d8e0d8 !important;
+      }
+
+      .hero::before,
+      .hero::after,
+      .toolbar-wrap {
+        display: none !important;
+      }
+
+      .question-card,
+      .intro-card,
+      .result-card,
+      .resource-card,
+      .section-block,
+      .subscore-item,
+      .resource-item {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .results {
+        display: block !important;
+      }
+
+      .option {
+        background: #fff !important;
+        box-shadow: none !important;
+        border: 1px solid #dde5dd !important;
+      }
+
+      .option.selected {
+        background: #f4f8f3 !important;
+        border-color: #adc0ad !important;
+      }
+
+      .print-note {
+        display: block;
+        margin-top: 12px;
+        font-size: 12px;
+        color: #5f6c5f;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="container">
+    <section class="hero">
+      <h1 class="hero-title">ALMA-W生活狀態關懷表</h1>
+      <p class="hero-subtitle">💛 這一週過得怎麼樣？</p>
+      <div class="hero-copy">
+        接下來這份表單，想請您幫我們描述一下這一週的狀態。<br>
+        我們問這些問題，是想更了解您這週真實的狀況，這樣才能給您真正有用的支持。<br>
+        沒有對錯，放鬆地填，慢慢來就好。
+      </div>
+      <div class="chip-row">
+        <span class="chip">共 32 題</span>
+        <span class="chip">約 10 分鐘</span>
+        <span class="chip">請依過去七天的實際情況作答</span>
+      </div>
+
+      <div class="meta-grid">
+        <div class="meta-card">
+          <label for="userName">姓名</label>
+          <input id="userName" type="text" placeholder="請輸入姓名" />
+        </div>
+        <div class="meta-card">
+          <label for="fillDate">填寫日期</label>
+          <input id="fillDate" type="date" />
+        </div>
+      </div>
+      <div class="print-note">列印或另存 PDF 前，建議先完成作答並按下「計算結果」。</div>
+    </section>
+
+    <section class="intro-grid">
+      <article class="intro-card">
+        <h2>填寫說明</h2>
+        <ul>
+          <li>請依據過去七天的實際情況作答</li>
+          <li>每題請勾選一個最符合的選項</li>
+          <li>沒有對錯答案，只需誠實填寫</li>
+          <li>填寫時間約 10 分鐘</li>
+        </ul>
+      </article>
+      <article class="intro-card">
+        <h2>提醒</h2>
+        <p>這份表單只是陪您一起看見這一週的生活狀態。請依照自己的節奏填寫，不需要急著完成。</p>
+      </article>
+    </section>
+
+    <div id="formRoot"></div>
+
+    <div class="toolbar-wrap">
+      <div class="toolbar">
+        <button class="btn-primary" id="calcBtn" type="button">計算結果</button>
+        <button class="btn-secondary" id="submitBtn" type="button">送出到 Google 試算表</button>
+        <button class="btn-secondary" id="pdfBtn" type="button">列印 / 另存 PDF</button>
+        <button class="btn-plain" id="resultBtn" type="button">查看結果區</button>
+        <button class="btn-plain" id="resetBtn" type="button">清空重填</button>
+      </div>
+    </div>
+
+    <section class="results" id="results">
+      <div class="result-grid">
+        <article class="result-card">
+          <h3>整體結果</h3>
+          <div class="score-line">
+            <span class="score-number" id="totalScore">0</span>
+            <span class="score-total">/ 128 分</span>
+          </div>
+          <div id="riskBox" class="risk-box risk-stable">尚未計算結果</div>
+          <div class="subscores" id="subscores"></div>
+        </article>
+
+        <article class="result-card">
+          <h3>六大面向雷達圖</h3>
+          <div class="chart-box">
+            <canvas id="radarChart"></canvas>
+          </div>
+        </article>
+      </div>
+
+      <article class="resource-card">
+        <h3>緊急資源</h3>
+        <div class="resource-list">
+          <div class="resource-item"><strong>119</strong>緊急醫療／消防，處理即時生命危險</div>
+          <div class="resource-item"><strong>1925</strong>安心專線：心理壓力、情緒困擾、自殺防治</div>
+          <div class="resource-item"><strong>1995</strong>生命線：自殺預防與生命低潮關懷</div>
+          <div class="resource-item"><strong>1980</strong>張老師專線：心理輔導諮詢</div>
+          <div class="resource-item"><strong>113</strong>保護專線：家庭暴力、性侵害、兒少保護</div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <script>
+    const sections = [
+      {
+        key: 'substance',
+        title: '第一部分：危害物質管理',
+        short: '危害物質管理',
+        max: 28,
+        description: '這部分想了解您這一週和酒的關係。不是要評斷您，而是幫助我們一起找到對您最有用的支持方式。',
+        questions: [
+          { id: 'q1', text: '過去這一週，您有幾天喝了含酒精的飲料？', note: '（包含：啤酒、高粱、米酒、紅白酒、威士忌、調酒罐、水果酒等任何含酒精飲品）', options: ['0 天，這週完全沒喝', '1–2 天', '3–4 天', '5–6 天', '7 天，幾乎每天都有喝'] },
+          { id: 'q2', text: '您喝酒的那幾天，大概喝了多少？', options: ['沒喝', '每次喝得不多，1–2 罐／杯就停了', '每次喝中等量，大概 3–4 罐／杯左右', '每次喝得比較多，5–6 罐／杯以上', '每次都喝很多，很難停下來，或喝到記憶模糊'] },
+          { id: 'q3', text: '這一週，您有多強烈地「想喝酒」的感覺？', note: '（就算最後沒有喝，這種想喝的衝動或念頭也算）', options: ['完全沒有這種感覺', '偶爾閃過一下，很容易忽略', '有時候會很想，但還可以轉移注意力', '常常很想，腦子裡一直出現', '幾乎時時刻刻都想，很難不去想'] },
+          { id: 'q4', text: '這一週，飲酒有沒有影響到您原本該做的事？', note: '（例如：工作遲到或請假、家務沒做、忘記接送小孩、答應別人的事沒做到）', options: ['完全沒有影響', '偶爾有一點小影響，但還好', '有幾次因為喝酒而沒做好該做的事', '常常因為喝酒而影響到日常責任', '這週幾乎每天都有被影響到'] },
+          { id: 'q5', text: '這一週，當您比較久沒喝酒（超過幾個小時或隔天），身體有沒有出現不舒服？', note: '（例如：手會抖、流很多汗、心跳很快、很焦躁不安、想吐或反胃、特別難入睡）', options: ['完全沒有這種感覺', '有一點點，但很輕微，不太影響', '有一些，稍微不舒服但還能撐過去', '蠻明顯的，讓我很不好受', '非常嚴重，讓我覺得只有喝酒才能舒服一點'] },
+          { id: 'q6', text: '這一週，您對自己「繼續減少飲酒或維持戒酒」這件事，感覺有多少把握？', options: ['很有把握，我覺得我做得到', '有一些信心，雖然偶爾還是很掙扎', '一半一半，有時候覺得可以，有時候又很懷疑', '不太有信心，這週覺得很難', '完全沒有信心，感覺撐不住'] },
+          { id: 'q7', text: '這一週，您在什麼樣的情況下最容易想喝酒或真的去喝？', note: '（可以想想是哪種時刻或場景讓您最難抵抗）', options: ['這週沒有特別想喝，或已能有效應對各種情境', '主要在社交場合或與特定人相處時（例如：聚會、朋友邀約）', '主要在壓力大或情緒不好時（例如：吵架、工作壓力、焦慮）', '主要在獨處、無聊或感到空虛時', '幾乎任何情況都會想喝，很難找到不想喝的時候'] }
+        ]
+      },
+      {
+        key: 'sleep',
+        title: '第二部分：修復式睡眠',
+        short: '修復式睡眠',
+        max: 24,
+        description: '飲酒和睡眠往往互相影響，這部分幫助我們了解您目前的睡眠狀況。',
+        questions: [
+          { id: 'q8', text: '過去一週，您每晚大概實際睡了幾個小時？', note: '（指真正睡著的時間，不是躺在床上的時間）', options: ['7 小時以上', '6–7 小時', '5–6 小時', '4–5 小時', '不到 4 小時，或嚴重睡眠不足'] },
+          { id: 'q9', text: '躺下來之後，您大概需要多久才能睡著？', options: ['不到 15 分鐘，很容易就睡著', '大概 15–30 分鐘', '30 分鐘到 1 小時', '1–2 小時，翻來覆去睡不著', '超過 2 小時，或幾乎整夜睡不著'] },
+          { id: 'q10', text: '這一週，您有沒有半夜或清晨就醒來、然後很難再入睡的情況？', options: ['沒有，睡得很穩', '偶爾，每週不到 1 次', '每週 1–2 次', '每週 3–4 次', '幾乎每天都會這樣'] },
+          { id: 'q11', text: '整體來說，您對這一週的睡眠品質感覺怎麼樣？', options: ['很滿意，睡得好，醒來有精神', '還算可以，大致滿意', '普通，睡了但好像沒睡夠', '不太滿意，常常覺得睡眠不夠恢復', '非常不滿意，幾乎每天起床都很痛苦'] },
+          { id: 'q12', text: '白天您會不會覺得很疲倦、昏沉、提不起勁，或很想補眠？', options: ['完全不會，白天精神很好', '很少，偶爾才會', '有時候會，但還能應付', '經常這樣，白天很難維持狀態', '幾乎每天都這樣，非常影響生活'] },
+          { id: 'q13', text: '這一週，您有沒有靠喝酒來幫助自己睡著？', note: '（例如：覺得喝一點比較容易入睡、睡前習慣喝一杯）', options: ['完全沒有，不靠酒精入睡', '偶爾這樣，每週不到 2 次', '每週 3–4 次', '幾乎每天都這樣', '每天都靠喝酒才睡得著'] }
+        ]
+      },
+      {
+        key: 'stress',
+        title: '第三部分：壓力管理',
+        short: '壓力管理',
+        max: 24,
+        description: '每一種感受都值得被傾聽，以下問題想了解您這週的情緒與心理狀態。',
+        questions: [
+          { id: 'q14', text: '這週您有多常感到緊張、焦慮或心裡不安？', options: ['完全沒有', '有幾天稍微有這種感覺', '一半以上的時間都有', '幾乎每天都有', '幾乎每天都非常強烈'] },
+          { id: 'q15', text: '這週您有沒有一直擔心某些事，而且很難讓自己停下來不去想？', options: ['完全沒有', '有幾天，但還好', '一半以上的時間都在擔心', '幾乎每天都這樣', '幾乎每天都非常嚴重，停不下來'] },
+          { id: 'q16', text: '這週您有沒有覺得很難放鬆下來，身體或心理一直是緊繃的狀態？', options: ['完全沒有，我能好好放鬆', '偶爾有幾天這樣', '一半以上的時間都難以放鬆', '幾乎每天都是緊繃的', '幾乎每天都非常嚴重，完全放鬆不了'] },
+          { id: 'q17', text: '這週您有多常感到心情低落、悶悶的，或覺得事情看起來都沒什麼希望？', options: ['完全沒有', '有幾天這樣的感覺', '一半以上的時間都是這樣', '幾乎每天都這樣', '幾乎每天都非常強烈'] },
+          { id: 'q18', text: '這週您有沒有對原本喜歡的事情失去興趣，提不起勁去做？', options: ['完全沒有，還是對事情有興趣', '偶爾有幾天這種感覺', '一半以上的時間都提不起勁', '幾乎每天都這樣', '幾乎每天都非常嚴重，什麼都不想做'] },
+          { id: 'q19', text: '這週您有沒有出現傷害自己、或覺得「消失算了」、「活著很累」的念頭？', options: ['完全沒有', '有幾天偶爾閃過這樣的念頭', '一半以上的時間有這樣的想法', '幾乎每天都有', '幾乎每天都非常強烈'] }
+        ]
+      },
+      {
+        key: 'diet',
+        title: '第四部分：均衡飲食',
+        short: '均衡飲食',
+        max: 16,
+        description: '身體的修復需要足夠的營養支持，這部分幫助我們了解您的飲食狀況。',
+        questions: [
+          { id: 'q20', text: '這一週，您每天大概吃幾餐正餐？', options: ['規律三餐，吃得算正常', '大多兩餐，偶爾少一餐', '通常只吃一餐', '很不規律，常常不定時', '幾乎不吃正餐，或常常一整天都沒吃東西'] },
+          { id: 'q21', text: '這一週，您每天有吃到蔬菜或水果嗎？', options: ['每天都有，至少 3 份以上', '每天有吃，但不多（1–2 份）', '偶爾吃，不是每天都有', '很少吃到蔬果', '幾乎完全沒有吃蔬果'] },
+          { id: 'q22', text: '這一週，您吃油炸食物、加工食品或含糖飲料的頻率大概是？', note: '（例如：炸雞、泡麵、超商即食、手搖飲、零食）', options: ['幾乎不吃，這週吃得比較健康', '偶爾吃，每週 1–2 次', '每週 3–4 次', '幾乎每天都有', '幾乎每天都是以這類食物為主'] },
+          { id: 'q23', text: '這一週，您每天喝水的量大概夠嗎？', note: '（建議量約 1500–2000ml，大約 6–8 杯）', options: ['足夠，每天都有喝到建議量', '差不多，大概 6–8 杯', '有點不夠，大概 4–6 杯', '喝得很少，大概 2–4 杯', '幾乎不喝水，或每天不到 2 杯'] }
+        ]
+      },
+      {
+        key: 'exercise',
+        title: '第五部分：規律運動',
+        short: '規律運動',
+        max: 12,
+        description: '身體活動對情緒穩定和睡眠改善都有幫助，不一定要是正式運動，日常活動也算。',
+        questions: [
+          { id: 'q24', text: '過去一週，您有幾天做了至少 30 分鐘、讓自己稍微有點喘或流汗的活動？', note: '（快走、騎腳踏車、爬樓梯、做家事、打掃、搬東西、任何讓身體動起來的事都算）', options: ['5 天以上', '3–4 天', '1–2 天', '有動一點，但不到 30 分鐘', '這週完全沒有任何身體活動'] },
+          { id: 'q25', text: '這週有運動或活動身體的時候，事後您的心情或精神有沒有比較好？', note: '（若這週完全沒有運動，請選最後一個選項）', options: ['有，明顯感覺心情或精神變好了', '有一些改善，但不太明顯', '沒什麼差別，感覺差不多', '有動，但反而更累或更不舒服', '這週完全沒有運動'] },
+          { id: 'q26', text: '整體來說，您這一週的體力和活力狀況如何？', options: ['很好，精力充沛', '還不錯，大致有活力', '普通，有時候覺得累', '常常覺得很疲倦，做什麼都費力', '非常疲倦無力，幾乎什麼都不想動'] }
+        ]
+      },
+      {
+        key: 'social',
+        title: '第六部分：正向社交連結',
+        short: '正向社交連結',
+        max: 24,
+        description: '復原的路上，身邊有人陪很重要。這部分幫助我們了解您目前的人際支持狀況。',
+        questions: [
+          { id: 'q27', text: '當您遇到困難或心情不好的時候，您有可以信任、願意聽您說話的人嗎？', options: ['有，而且不只一個人', '有幾個人可以找', '有一兩個，但有時候不太敢開口', '不太確定，好像有但又不確定能不能說', '沒有，想不到可以找誰說'] },
+          { id: 'q28', text: '這週您有沒有參加任何支持團體、復原相關活動，或與其他有類似經歷的人交流？', options: ['有，這週有參加，而且對我很有幫助', '有去參加一次', '沒有，但我有計劃要去', '沒有參加，也沒有計劃', '不知道有這類活動或資源'] },
+          { id: 'q29', text: '這一週，您和家人或重要的朋友的關係感覺怎麼樣？', options: ['很好，互相支持，有真實的交流', '還不錯，關係算平穩', '普通，維持表面聯絡但不深入', '有一些緊張或摩擦，讓我感到壓力', '關係很差，或幾乎沒有聯絡'] },
+          { id: 'q30', text: '這一週，您身邊重要的人（家人、伴侶、親近朋友）對您「減少飲酒或戒酒」這件事，態度是怎麼樣的？', options: ['很支持，讓我感覺到被鼓勵和陪伴', '大致支持，雖然偶爾有些不理解', '態度普通，沒什麼特別支持也沒有反對', '有些負面反應，讓我感到壓力或不被理解', '明顯阻礙或打擊我的復原（例如：勸我喝、嘲諷、不信任、吵架）'] },
+          { id: 'q31', text: '這一週，您有多常感到孤單、被隔離，或覺得沒有人真正理解您？', options: ['幾乎沒有這種感覺', '偶爾有，但不強烈', '有時候有這種感覺', '很常有，這週大部分時間都有', '幾乎一直都有這種感覺'] },
+          { id: 'q32', text: '整體來說，這一週您覺得自己的生活有沒有意義或值得期待的事？', options: ['有，我能感受到生活的意義和值得的事', '有一些，雖然不多', '普通，說不上有也說不上沒有', '不太感覺得到，覺得有點空洞', '完全感受不到，生活對我來說沒什麼意義'] }
+        ]
+      }
+    ];
+
+    const APPS_SCRIPT_URL = 'PASTE_YOUR_GOOGLE_APPS_SCRIPT_EXEC_URL_HERE';
+    const formRoot = document.getElementById('formRoot');
+    const scores = {};
+    let radarChart = null;
+
+    function renderForm() {
+      formRoot.innerHTML = sections.map((section, sectionIndex) => `
+        <section class="section-block" id="${section.key}">
+          <div class="section-head">
+            <div>
+              <div class="section-title">${section.title}</div>
+              <div class="section-desc">${section.description}</div>
+            </div>
+            <div class="score-tag" id="${section.key}-score">小計 0 / ${section.max}</div>
+          </div>
+          <div class="question-list">
+            ${section.questions.map((q, index) => `
+              <article class="question-card">
+                <div class="question-head">
+                  <div class="question-mark">${sectionIndex + 1}-${index + 1}</div>
+                  <div>
+                    <p class="question-title">${q.text}</p>
+                    ${q.note ? `<div class="question-note">${q.note}</div>` : ''}
+                  </div>
+                </div>
+                <div class="options">
+                  ${q.options.map((opt, idx) => `
+                    <label class="option" data-question="${q.id}" data-value="${idx}">
+                      <input type="radio" name="${q.id}" value="${idx}" />
+                      <span>${opt}</span>
+                    </label>
+                  `).join('')}
+                </div>
+              </article>
+            `).join('')}
+          </div>
+        </section>
+      `).join('');
+
+      document.getElementById('fillDate').value = new Date().toISOString().slice(0, 10);
+      bindEvents();
+      updateSectionScores();
+    }
+
+    function bindEvents() {
+      document.querySelectorAll('.option').forEach(option => {
+        option.addEventListener('click', () => {
+          const question = option.dataset.question;
+          const value = Number(option.dataset.value);
+          scores[question] = value;
+          document.querySelectorAll(`.option[data-question="${question}"]`).forEach(el => el.classList.remove('selected'));
+          document.querySelectorAll(`input[name="${question}"]`).forEach(input => {
+            input.checked = Number(input.value) === value;
+          });
+          option.classList.add('selected');
+          updateSectionScores();
+        });
+      });
+    }
+
+    function getAnsweredCount() {
+      return sections.reduce((sum, section) => sum + section.questions.filter(q => Number.isInteger(scores[q.id])).length, 0);
+    }
+
+    function getSectionScore(section) {
+      return section.questions.reduce((sum, q) => sum + (Number.isInteger(scores[q.id]) ? scores[q.id] : 0), 0);
+    }
+
+    function updateSectionScores() {
+      sections.forEach(section => {
+        const subtotal = getSectionScore(section);
+        const scoreNode = document.getElementById(`${section.key}-score`);
+        if (scoreNode) scoreNode.textContent = `小計 ${subtotal} / ${section.max}`;
+      });
+    }
+
+    function getRisk(total) {
+      if (total <= 26) return { level: '穩定恢復期', action: '每週例行追蹤，正向鼓勵', className: 'risk-stable' };
+      if (total <= 52) return { level: '輕度關注', action: '主動關懷聯繫，評估支持需求', className: 'risk-light' };
+      if (total <= 79) return { level: '中度風險', action: '安排電話／視訊訪談，調整介入計畫', className: 'risk-medium' };
+      if (total <= 105) return { level: '高度風險', action: '優先聯繫，考慮提前門診', className: 'risk-high' };
+      return { level: '緊急狀態', action: '立即聯繫，啟動危機介入流程', className: 'risk-urgent' };
+    }
+
+    function renderRadar(subtotals) {
+      const canvas = document.getElementById('radarChart');
+      const data = subtotals.map(item => Math.round((item.score / item.max) * 100));
+
+      if (radarChart) radarChart.destroy();
+
+      radarChart = new Chart(canvas, {
+        type: 'radar',
+        data: {
+          labels: subtotals.map(item => item.name),
+          datasets: [{
+            label: '各面向百分比',
+            data,
+            backgroundColor: 'rgba(127, 156, 125, 0.22)',
+            borderColor: 'rgba(79, 110, 85, 0.95)',
+            borderWidth: 2,
+            pointBackgroundColor: '#6e8e70',
+            pointBorderColor: '#ffffff',
+            pointHoverBackgroundColor: '#4f6e55',
+            pointRadius: 4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                color: '#465145',
+                font: { family: 'Noto Sans TC, Microsoft JhengHei, sans-serif', size: 12 }
+              }
+            }
+          },
+          scales: {
+            r: {
+              min: 0,
+              max: 100,
+              ticks: {
+                stepSize: 20,
+                backdropColor: 'transparent',
+                color: '#748073'
+              },
+              angleLines: { color: 'rgba(114, 143, 114, 0.18)' },
+              grid: { color: 'rgba(114, 143, 114, 0.18)' },
+              pointLabels: {
+                color: '#4f6e55',
+                font: { family: 'Noto Sans TC, Microsoft JhengHei, sans-serif', size: 13, weight: '700' }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function buildSubmissionData() {
+      const answered = getAnsweredCount();
+      if (answered < 32) {
+        alert(`目前已作答 ${answered} / 32 題，請先完成所有題目。`);
+        return null;
+      }
+
+      const subtotals = sections.map(section => ({
+        key: section.key,
+        name: section.short,
+        score: getSectionScore(section),
+        max: section.max
+      }));
+
+      const total = subtotals.reduce((sum, item) => sum + item.score, 0);
+      const risk = getRisk(total);
+      const name = document.getElementById('userName').value.trim();
+      const fillDate = document.getElementById('fillDate').value;
+
+      const payload = {
+        name,
+        fillDate,
+        totalScore: total,
+        riskLevel: risk.level
+      };
+
+      sections.forEach(section => {
+        section.questions.forEach(q => {
+          payload[q.id] = Number.isInteger(scores[q.id]) ? scores[q.id] : '';
+        });
+      });
+
+      return { subtotals, total, risk, payload };
+    }
+
+    function renderResultsView(subtotals, total, risk) {
+      document.getElementById('results').classList.add('show');
+      document.getElementById('totalScore').textContent = total;
+
+      const riskBox = document.getElementById('riskBox');
+      riskBox.className = `risk-box ${risk.className}`;
+      riskBox.innerHTML = `<span class="risk-level">${risk.level}</span><span class="risk-action">${risk.action}</span>`;
+
+      document.getElementById('subscores').innerHTML = subtotals.map(item => `
+        <div class="subscore-item">
+          <p class="subscore-name">${item.name}</p>
+          <p class="subscore-value">${item.score} / ${item.max}</p>
+        </div>
+      `).join('');
+
+      renderRadar(subtotals);
+    }
+
+    function calculateResults() {
+      const result = buildSubmissionData();
+      if (!result) return;
+      renderResultsView(result.subtotals, result.total, result.risk);
+      document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+
+    async function submitToGoogleSheet() {
+      const result = buildSubmissionData();
+      if (!result) return;
+      if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes('PASTE_YOUR_GOOGLE_APPS_SCRIPT_EXEC_URL_HERE')) {
+        alert('請先把 HTML 內的 APPS_SCRIPT_URL 換成你的 Google Apps Script /exec 網址。');
+        return;
+      }
+
+      renderResultsView(result.subtotals, result.total, result.risk);
+
+      const formData = new FormData();
+      Object.entries(result.payload).forEach(([key, value]) => {
+        formData.append(key, value ?? '');
+      });
+
+      try {
+        await fetch(APPS_SCRIPT_URL, {
+          method: 'POST',
+          body: formData,
+          mode: 'no-cors'
+        });
+        alert('資料已送出到 Google 試算表。');
+      } catch (error) {
+        console.error(error);
+        alert('送出失敗，請確認 Apps Script 已部署為 Web App，並檢查網址是否正確。');
+      }
+    }
+
+    function resetForm() {
+      Object.keys(scores).forEach(key => delete scores[key]);
+      document.querySelectorAll('input[type="radio"]').forEach(input => { input.checked = false; });
+      document.querySelectorAll('.option').forEach(el => el.classList.remove('selected'));
+      document.getElementById('results').classList.remove('show');
+      document.getElementById('totalScore').textContent = '0';
+      const riskBox = document.getElementById('riskBox');
+      riskBox.className = 'risk-box risk-stable';
+      riskBox.textContent = '尚未計算結果';
+      document.getElementById('subscores').innerHTML = '';
+      if (radarChart) {
+        radarChart.destroy();
+        radarChart = null;
+      }
+      updateSectionScores();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.getElementById('calcBtn').addEventListener('click', calculateResults);
+    document.getElementById('submitBtn').addEventListener('click', submitToGoogleSheet);
+    document.getElementById('pdfBtn').addEventListener('click', () => window.print());
+    document.getElementById('resultBtn').addEventListener('click', () => document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' }));
+    document.getElementById('resetBtn').addEventListener('click', resetForm);
+
+    renderForm();
+  </script>
+</body>
+</html>
