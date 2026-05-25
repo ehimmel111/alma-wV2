@@ -867,7 +867,7 @@
       }
     ];
 
-    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbybxGj2BHQFmlJh3AG5TbqGeaEKfExLWB5RbFJdzSK25F9WISG_w8k3TeZObjlGezxHgQ/exec';
+    const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwB63CN6wu7cyt0l7QbyoH47tiXOls8KH5c1nBYV_zdgAE_3TQQKTp8oqVfnT2llukfZw/exec';
     const formRoot = document.getElementById('formRoot');
     const scores = {};
     let radarChart = null;
@@ -1073,23 +1073,41 @@
         return;
       }
 
+      if (!result.payload.name) {
+        alert('請先填寫「姓名」。');
+        return;
+      }
+      if (!result.payload.fillDate) {
+        alert('請先選擇「填寫日期」。');
+        return;
+      }
+
       renderResultsView(result.subtotals, result.total, result.risk);
 
-      const formData = new FormData();
+      const params = new URLSearchParams();
       Object.entries(result.payload).forEach(([key, value]) => {
-        formData.append(key, value ?? '');
+        params.append(key, value === undefined || value === null ? '' : String(value));
       });
+
+      const submitBtn = document.getElementById('submitBtn');
+      const originalText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = '送出中…';
 
       try {
         await fetch(APPS_SCRIPT_URL, {
           method: 'POST',
-          body: formData,
-          mode: 'no-cors'
+          mode: 'no-cors',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' },
+          body: params.toString()
         });
-        alert('資料已送出到 Google 試算表。');
+        alert('資料已送出到 Google 試算表，請到試算表確認。');
       } catch (error) {
-        console.error(error);
-        alert('送出失敗，請確認 Apps Script 已部署為 Web App，並檢查網址是否正確。');
+        console.error('送出失敗', error);
+        alert('送出失敗，請確認：\n1. Apps Script 已部署為 Web App\n2. 「誰可存取」設為「所有人」\n3. 網址是 /exec 結尾');
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalText;
       }
     }
 
