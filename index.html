@@ -943,11 +943,11 @@
     }
 
     function getRisk(total) {
-      if (total <= 26) return { level: '穩定恢復期', action: '每週例行追蹤，正向鼓勵', className: 'risk-stable' };
-      if (total <= 52) return { level: '輕度關注', action: '主動關懷聯繫，評估支持需求', className: 'risk-light' };
-      if (total <= 79) return { level: '中度風險', action: '安排電話／視訊訪談，調整介入計畫', className: 'risk-medium' };
-      if (total <= 105) return { level: '高度風險', action: '優先聯繫，考慮提前門診', className: 'risk-high' };
-      return { level: '緊急狀態', action: '立即聯繫，啟動危機介入流程', className: 'risk-urgent' };
+      if (total <= 26) return { level: '穩定恢復期', action: '繼續保持，每週例行追蹤，您做得很好！', className: 'risk-stable' };
+      if (total <= 52) return { level: '輕度關注', action: '有些地方需要多點留意，我們會繼續支持您', className: 'risk-light' };
+      if (total <= 79) return { level: '中度風險', action: '建議安排電話或視訊訪談，一起調整支持計畫。', className: 'risk-medium' };
+      if (total <= 105) return { level: '高度風險', action: '請優先聯繫照護團隊，考慮提前安排門診。', className: 'risk-high' };
+      return { level: '緊急狀態', action: '請立即前往醫院就診，或撥打 119 求助！', className: 'risk-urgent' };
     }
 
     function renderRadar(subtotals) {
